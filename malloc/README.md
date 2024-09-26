@@ -9,12 +9,11 @@ A self-implementation of `malloc` in C, stored in the file `malloc.c`. Also incl
 ```
 clang -O0 -g -W -Wall -Wextra -shared -fPIC malloc.c -o malloc.so
 ```
-2. Set the environment variable `LD_PRELOAD` to point to the full location of the `malloc.c` file in your local machine, i.e.
+3. Set the environment variable `LD_PRELOAD` to point to the full location of the `malloc.c` file in your local machine, i.e.
 ```
 export LD_PRELOAD=<path_to_malloc.so>
 ```
-3. Run the `main` binary, and see it work. You may modify the source code to include more advanced usage of `malloc` and `free` defined in custom `malloc.c` 
-
+4. Run the `main` binary, and see it work. You may modify the source code to include more advanced usage of `malloc` and `free` defined in custom `malloc.c` 
 
 ### Note
 
