@@ -2,6 +2,15 @@
 
 A self-implementation of `malloc` in C, stored in the file `malloc.c`. Also included is a sample `main.c` file that is to be used for testing purposes.
 
+This implementation uses [`sbrk`](https://man7.org/linux/man-pages/man2/sbrk.2.html) to allocate memory internally. This is not at all optimal as of now, though work will continue on this.
+
+Next Steps:
+- Make our `malloc` return a pointer "which is suitably aligned for any built-in type"
+- Split up the blocks to use the minimum amount of space
+- Merge adjacent free blocks together into one
+- Use the best-fit approach to re-allocate free blocks 
+
+---
 #### Steps For Using
 
 1. Compile `main.c` into  `main` using any C compiler of your choice.
@@ -15,10 +24,12 @@ export LD_PRELOAD=<path_to_malloc.so>
 ```
 4. Run the `main` binary, and see it work. You may modify the source code to include more advanced usage of `malloc` and `free` defined in custom `malloc.c` 
 
+---
 ### Note
 
 - This will most definitely contain bugs, so obviously prone to crash.
 
+---
 ### References
 
 - [Article](https://danluu.com/malloc-tutorial/)
