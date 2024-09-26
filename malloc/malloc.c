@@ -90,7 +90,7 @@ void* malloc(size_t size) {
       }
     } else { // found a free block
       block->free = 0;
-      block->magic = 0x7777777;
+      block->magic = 0x77777777;
     }
   }
 
@@ -104,7 +104,7 @@ void free(void* ptr) {
 
   struct BlockMeta *block_ptr = get_block_ptr(ptr);
   assert(block_ptr->free == 0);
-  assert(block_ptr->magic == 0x7777777 || block_ptr->magic == 0x12345678); // remove for non-debug environment
+  assert(block_ptr->magic == 0x77777777 || block_ptr->magic == 0x12345678); // remove for non-debug environment
   block_ptr->free = 1;
   block_ptr->magic = 0x55555555;
 }
