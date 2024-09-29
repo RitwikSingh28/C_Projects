@@ -46,6 +46,7 @@ double* get_results(double duration) {
 double* logical_operation(int *x, int num_elements) {
   double duration = 0.f;
   int* y = (int *)malloc(num_elements * sizeof(int));
+  posix_memalign((void**) &y, 64, num_elements * sizeof(int));
 
   if(!y) {
     fprintf(stderr, "Memory allocation failed for y\n");
@@ -78,6 +79,7 @@ double* logical_operation(int *x, int num_elements) {
 double* mod_operation(int *x, int num_elements) {
   double duration = 0.f;
   int* y = (int *)malloc(num_elements * sizeof(int));
+  posix_memalign((void**) &y, 64, num_elements * sizeof(int));
 
   if(!y) {
     fprintf(stderr, "Memory allocation failed for y\n");
@@ -104,6 +106,7 @@ double* mod_operation(int *x, int num_elements) {
 
 void benchmarking(long num_elements) {
   int* x = (int*)malloc(num_elements * sizeof(int));
+  posix_memalign((void**) &x, 64, num_elements * sizeof(int));
 
   if(!x) {
     fprintf(stderr, "Memory allocation failed for x\n");
