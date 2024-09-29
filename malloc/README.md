@@ -11,7 +11,7 @@ Next Steps:
 - Use the best-fit approach to re-allocate free blocks 
 
 ---
-#### Steps For Using
+#### Steps For Using Custom Malloc
 
 1. Compile `main.c` into  `main` using any C compiler of your choice.
 2. Compile `malloc.c` into `malloc.so`. A sample command would be using `clang`:
@@ -35,3 +35,4 @@ export LD_PRELOAD=<path_to_malloc.so>
 - [Article](https://danluu.com/malloc-tutorial/)
 - [LD_PRELOAD](https://jvns.ca/blog/2014/11/27/ld-preload-is-super-fun-and-easy/)
 - [A more detailed implementation - dlmalloc](https://github.com/ennorehling/dlmalloc/blob/master/malloc.c)
+- [Data Structure Alignment](https://danluu.com/malloc-tutorial/)
