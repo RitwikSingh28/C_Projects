@@ -20,7 +20,6 @@ struct BlockMeta{
 #define META_SIZE sizeof(struct BlockMeta)
 
 void *global_base = NULL; // The head of our linkedlist of memory blocks
-
 /*
  * `**last` to keep track of the previous block while we're traversing the list of blocks 
  * Leads to an efficient traversal and insertion of the new blocks in the ll
