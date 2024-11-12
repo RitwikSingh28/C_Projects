@@ -5,6 +5,7 @@
  * sbrk(foo) increments the heap size by foo and returns a pointer to the previous top 
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
@@ -13,6 +14,7 @@
 struct BlockMeta{
   size_t size;
   struct BlockMeta *next;
+  struct BlockMeta *prev; // This would be useful for merging together adjacent free blocks for both ahead and behind
   int free;
   int magic; // For debugging purposes; TODO: Remove in non-debug mode
 };
@@ -39,7 +41,7 @@ struct BlockMeta* find_free_block(struct BlockMeta **last, size_t size) {
 /*
  * Just a Helper Function, does not return the pointer to the allocated memory
  * to the client directly. Need to modify the pointer to only point to the
- * requested size, and not the metadata
+ * eequested size, and not the metadata
  */
 struct BlockMeta* request_space(struct BlockMeta *last, size_t size) {
   struct BlockMeta* block = sbrk(0);
@@ -52,6 +54,9 @@ struct BlockMeta* request_space(struct BlockMeta *last, size_t size) {
 
   if(last) {
     last->next = block;
+    block->prev = last;
+  } else {
+    block->prev = NULL;
   }
 
   block->size = size;
@@ -92,13 +97,17 @@ void* malloc(size_t size) {
         return NULL;
       }
     } else { // found a free block
-      if ((block->size - size) >= (META_SIZE + sizeof(void *))) {
+      if ((block->size - size) >= (META_SIZE + ALIGNMENT)) {
         // split the block 
         struct BlockMeta *split = (struct BlockMeta *)((char*)block + META_SIZE + size);
 
         // Initialize the fields of the `split` block
         split->size = block->size - size - META_SIZE;
         split->next = block->next;
+        if (split->next) {
+          split->next->prev = split;
+        }
+        split->prev = block;
         split->free = 1;
         split->magic = 0x55555555;
 
@@ -125,6 +134,28 @@ void free(void* ptr) {
   assert(block_ptr->magic == 0x77777777 || block_ptr->magic == 0x12345678); // remove for non-debug environment
   block_ptr->free = 1;
   block_ptr->magic = 0x55555555;
+
+  // -------------------------------------------------------------------------
+  // coalescing adjacent free blocks together into one to avoid fragmentation
+  // -------------------------------------------------------------------------
+  
+  // Merge with the previous block if free
+  if (block_ptr->prev && block_ptr->prev->free == 1) {
+    block_ptr->prev->size += (META_SIZE + block_ptr->size);
+    block_ptr->prev->next = block_ptr->next;
+    if (block_ptr->next) {
+      block_ptr->next->prev = block_ptr->prev;
+    }
+    block_ptr = block_ptr->prev; // Move back to the previous block after merging
+  } 
+  // Merge with the next block if free
+  if (block_ptr->next && block_ptr->next->free == 1) {
+    block_ptr->size += (META_SIZE + block_ptr->next->size); 
+    block_ptr->next = block_ptr->next->next;
+    if (block_ptr->next) {
+      block_ptr->next->prev = block_ptr;
+    }
+  }
 }
 
 void* realloc(void* ptr, size_t size) {
@@ -147,12 +178,16 @@ void* realloc(void* ptr, size_t size) {
     return NULL;
   }
 
-  memcpy(new_ptr, ptr, block_ptr->size);
+  memcpy(new_ptr, ptr, size < block_ptr->size ? size : block_ptr->size); // A check to avoid memory corruption if the new size is smaller than the original one
+                                                                         // Only need to write the minimum of the old and the new sizes
   free(ptr);
   return new_ptr;
 }
 
 void *calloc(size_t nelem, size_t elsize) {
+  if (nelem && (elsize > (SIZE_MAX / nelem))) {
+    return NULL; // Overflow
+  }
   size_t size = nelem * elsize;
   void *ptr = malloc(size);
   memset(ptr, 0, size);
