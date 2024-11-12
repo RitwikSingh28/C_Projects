@@ -14,11 +14,11 @@ Next Steps:
 
 1. Compile `malloc.c` into `malloc`, with the following commands:
 ```
-clang -O3 -g malloc.c -o malloc
+clang -O3 malloc.c -o malloc
 ```
 or with `gcc`, if you prefer:
 ```
-gcc -O3 -g malloc.c -o malloc
+gcc -O3 malloc.c -o malloc
 ```
 2. Run `malloc` to run the tests.
 
@@ -28,7 +28,7 @@ gcc -O3 -g malloc.c -o malloc
 1. Compile `main.c` into  `main` using any C compiler of your choice.
 2. Compile `malloc.c` into `malloc.so`. A sample command would be using `clang`:
 ```
-clang -O0 -g -W -Wall -Wextra -shared -fPIC malloc.c -o malloc.so
+clang -O3 -W -Wall -Wextra -shared -fPIC malloc.c -o malloc.so
 ```
 3. Set the environment variable `LD_PRELOAD` to point to the full location of the `malloc.c` file in your local machine, i.e.
 ```
