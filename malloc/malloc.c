@@ -20,9 +20,10 @@ struct BlockMeta{
 #define META_SIZE sizeof(struct BlockMeta)
 
 void *global_base = NULL; // The head of our linkedlist of memory blocks
+
 /*
  * `**last` to keep track of the previous block while we're traversing the list of blocks 
- * Leads to an efficient traversal and insertion of the new blocks in the ll
+ * Leads to an efficient traversal and insertion of the new blocks in the linkedlist
  */
 struct BlockMeta* find_free_block(struct BlockMeta **last, size_t size) {
   struct BlockMeta *current = global_base;
@@ -59,7 +60,7 @@ struct BlockMeta* request_space(struct BlockMeta *last, size_t size) {
 }
 
 /*
- * Given a pointer to a memory block, return a pointer that points from the 
+ * Given a pointer to a memory block, return a pointer that points to the 
  * starting of the associated metadata for that particular block
  */
 struct BlockMeta *get_block_ptr(void *ptr) {
@@ -88,6 +89,21 @@ void* malloc(size_t size) {
         return NULL;
       }
     } else { // found a free block
+      if ((block->size - size) >= (META_SIZE + sizeof(void *))) {
+        // split the block 
+        struct BlockMeta *split = (struct BlockMeta *)((char*)block + META_SIZE + size);
+
+        // Initialize the fields of the `split` block
+        split->size = block->size - size - META_SIZE;
+        split->next = block->next;
+        split->free = 1;
+        split->magic = 0x55555555;
+
+        // Updating the original block
+        block->next = split;
+        block->size = size;
+      }
+
       block->free = 0;
       block->magic = 0x77777777;
     }
