@@ -10,6 +10,18 @@ Next Steps:
 - Merge adjacent free blocks together into one
 - Use the best-fit approach to re-allocate free blocks 
 
+--- Running Tests
+
+1. Compile `malloc.c` into `malloc`, with the following commands:
+```
+clang -O3 -g malloc.c -o malloc
+```
+or with `gcc`, if you prefer:
+```
+gcc -O3 -g malloc.c -o malloc
+```
+2. Run `malloc` to run the tests.
+
 ---
 #### Steps For Using Custom Malloc
 
