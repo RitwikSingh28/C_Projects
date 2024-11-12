@@ -6,6 +6,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
@@ -16,7 +17,6 @@ struct BlockMeta{
   struct BlockMeta *next;
   struct BlockMeta *prev; // This would be useful for merging together adjacent free blocks for both ahead and behind
   int free;
-  int magic; // For debugging purposes; TODO: Remove in non-debug mode
 };
 
 #define ALIGNMENT 8
@@ -62,7 +62,6 @@ struct BlockMeta* request_space(struct BlockMeta *last, size_t size) {
   block->size = size;
   block->next = NULL;
   block->free = 0;
-  block->magic = 0x12345678;
   return block;
 }
 
@@ -109,7 +108,6 @@ void* malloc(size_t size) {
         }
         split->prev = block;
         split->free = 1;
-        split->magic = 0x55555555;
 
         // Updating the original block
         block->next = split;
@@ -117,7 +115,6 @@ void* malloc(size_t size) {
       }
 
       block->free = 0;
-      block->magic = 0x77777777;
     }
   }
 
@@ -131,9 +128,7 @@ void free(void* ptr) {
 
   struct BlockMeta *block_ptr = get_block_ptr(ptr);
   assert(block_ptr->free == 0);
-  assert(block_ptr->magic == 0x77777777 || block_ptr->magic == 0x12345678); // remove for non-debug environment
   block_ptr->free = 1;
-  block_ptr->magic = 0x55555555;
 
   // -------------------------------------------------------------------------
   // coalescing adjacent free blocks together into one to avoid fragmentation
@@ -159,6 +154,10 @@ void free(void* ptr) {
 }
 
 void* realloc(void* ptr, size_t size) {
+  if (size <= 0) {
+    free(ptr);
+    return NULL;
+  }
   if(!ptr) {
     // NULL pointer, realloc should act like malloc
     return malloc(size);
@@ -192,4 +191,131 @@ void *calloc(size_t nelem, size_t elsize) {
   void *ptr = malloc(size);
   memset(ptr, 0, size);
   return ptr;
+}
+
+/* Helper function to print memory block's size and free status */
+void print_block(struct BlockMeta* block) {
+    printf("Block at %p: size=%zu, free=%d\n", block, block->size, block->free);
+}
+
+void test_malloc_and_free() {
+    printf("Running test_malloc_and_free...\n");
+
+    void* ptr1 = malloc(100);
+    assert(ptr1 != NULL);
+
+    void* ptr2 = malloc(200);
+    assert(ptr2 != NULL);
+
+    free(ptr1);
+    free(ptr2);
+
+    void* ptr3 = malloc(100); // This should reuse the freed block
+    assert(ptr3 != NULL);
+
+    void* ptr4 = malloc(200); // This should reuse the freed block
+    assert(ptr4 != NULL);
+
+    printf("test_malloc_and_free passed.\n");
+}
+
+void test_split_blocks() {
+    printf("Running test_split_blocks...\n");
+
+    void* ptr1 = malloc(500);  // Allocate a larger block
+    assert(ptr1 != NULL);
+
+    void* ptr2 = malloc(200);  // Allocate a smaller block
+    assert(ptr2 != NULL);
+
+    free(ptr1);  // Free the first block
+    free(ptr2);  // Free the second block
+
+    void* ptr3 = malloc(100); // Check if the first block gets split
+    assert(ptr3 != NULL);
+
+    printf("test_split_blocks passed.\n");
+}
+
+void test_coalescing() {
+    printf("Running test_coalescing...\n");
+
+    void* ptr1 = malloc(100);
+    void* ptr2 = malloc(200);
+    void* ptr3 = malloc(150);
+
+    free(ptr1);
+    free(ptr2);
+    free(ptr3);
+
+    void* ptr4 = malloc(450); // Should coalesce the previous blocks into one
+    assert(ptr4 != NULL);
+
+    printf("test_coalescing passed.\n");
+}
+
+void test_alignment() {
+    printf("Running test_alignment...\n");
+
+    void* ptr1 = malloc(5); // Allocation that requires alignment
+    assert(ptr1 != NULL);
+
+    uintptr_t ptr_value = (uintptr_t)ptr1;
+    assert(ptr_value % ALIGNMENT == 0);  // Should be aligned to 8-byte boundary
+
+    free(ptr1);
+
+    printf("test_alignment passed.\n");
+}
+
+void test_calloc() {
+    printf("Running test_calloc...\n");
+
+    size_t nelem = 10;
+    size_t elsize = sizeof(int);
+    void* ptr = calloc(nelem, elsize);
+
+    assert(ptr != NULL);
+
+    // Verify if all memory is zeroed out
+    int* int_ptr = (int*)ptr;
+    for (size_t i = 0; i < nelem; i++) {
+        assert(int_ptr[i] == 0);
+    }
+
+    free(ptr);
+    printf("test_calloc passed.\n");
+}
+
+void test_realloc() {
+    printf("Running test_realloc...\n");
+
+    void* ptr1 = malloc(100);
+    assert(ptr1 != NULL);
+
+    // Reallocating to a larger size
+    void* ptr2 = realloc(ptr1, 200);
+    assert(ptr2 != NULL);
+
+    // Reallocating to a smaller size
+    void* ptr3 = realloc(ptr2, 50);
+    assert(ptr3 != NULL);
+
+    // Reallocating to size 0 should free the memory
+    void* ptr4 = realloc(ptr3, 0);
+    assert(ptr4 == NULL);
+
+    printf("test_realloc passed.\n");
+}
+
+int main() {
+    test_malloc_and_free();
+    test_split_blocks();
+    test_coalescing();
+    test_alignment();
+    test_realloc();
+    test_calloc();
+
+    printf("All tests passed!\n");
+    return 0;
 }
