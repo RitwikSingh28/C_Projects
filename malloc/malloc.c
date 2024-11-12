@@ -17,7 +17,9 @@ struct BlockMeta{
   int magic; // For debugging purposes; TODO: Remove in non-debug mode
 };
 
-#define META_SIZE sizeof(struct BlockMeta)
+#define ALIGNMENT 8
+#define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1)) // Rounding up to the nearest multiple of ALIGNMENT
+#define META_SIZE ALIGN(sizeof(struct BlockMeta))
 
 void *global_base = NULL; // The head of our linkedlist of memory blocks
 
@@ -74,6 +76,7 @@ void* malloc(size_t size) {
     return NULL;
   }
 
+  size = ALIGN(size);
   if(!global_base) { // First call
     block = request_space(NULL, size);
     if(!block) {
