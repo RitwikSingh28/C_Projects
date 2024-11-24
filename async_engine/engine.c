@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+typedef struct {
+  
+}Scheduler;
+
 void countdown(int n) {
   while (n > 0) {
     printf("Count Down: %d\n", n);
