@@ -10,25 +10,28 @@ function:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	subq	$48, %rsp
 	movl	%edi, -36(%rbp)
 	movl	%esi, -40(%rbp)
 	movl	%edx, -44(%rbp)
-	movq	%fs:40, %rax
+	leaq	-13(%rbp), %rax
+	addq	$12, %rax
 	movq	%rax, -8(%rbp)
-	xorl	%eax, %eax
-	nop
 	movq	-8(%rbp), %rax
-	subq	%fs:40, %rax
-	je	.L2
-	call	__stack_chk_fail@PLT
-.L2:
-	leave
+	movl	(%rax), %eax
+	leal	8(%rax), %edx
+	movq	-8(%rbp), %rax
+	movl	%edx, (%rax)
+	nop
+	popq	%rbp
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
 .LFE0:
 	.size	function, .-function
+	.section	.rodata
+.LC0:
+	.string	"%d\n"
+	.text
 	.globl	main
 	.type	main, @function
 main:
@@ -39,12 +42,21 @@ main:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
+	subq	$16, %rsp
+	movl	$10, -4(%rbp)
 	movl	$3, %edx
 	movl	$2, %esi
 	movl	$1, %edi
 	call	function
+	movl	$1, -4(%rbp)
+	movl	-4(%rbp), %eax
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rax
+	movq	%rax, %rdi
 	movl	$0, %eax
-	popq	%rbp
+	call	printf@PLT
+	movl	$0, %eax
+	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc

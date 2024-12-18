@@ -74,7 +74,5 @@ int match(int token) {
   return token == lookahead;
 }
 
-void advance(void) {
-  // Advance the lookahead to the next input symbol 
   lookahead = lex();
 }
