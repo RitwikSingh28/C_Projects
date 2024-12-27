@@ -9,46 +9,44 @@ char *read_file(const char *file_path, size_t *size) {
   char *buf = NULL;
 
   if (!fp) {
-    return NULL;
+    goto error;
   }
 
   if (fseek(fp, 0L, SEEK_END) < 0) {
-    if (fp) {
-      fclose(fp);
-    }
-    return NULL;
+    goto error;
   }
 
   long fsize = ftell(fp);
   if (fsize < 0) {
-    if(fp) {
-      fclose(fp);
-    }
-    return NULL;
+    goto error;
   }
 
   buf = (char *)malloc(sizeof(char) * fsize);
 
   if (!buf) {
-    if (fp) {
-      fclose(fp);
-    }
+    goto error;
   }
 
   if (fseek(fp, 0, SEEK_SET) < 0) {
-    if (fp) {
-      fclose(fp);
-    }
-    if (buf) {
-      free(buf);
-      buf = NULL;
-    }
+    goto error;
   }
 
   (void) file_path;
   (void) size;
   assert(0 && "Not Implemented!");
   return 0;
+
+error:
+  if (fp) {
+    fclose(fp);
+  }
+
+  if (buf) {
+    free(buf);
+    buf = NULL;
+  }
+
+  return NULL;
 }
 
 int main(int argc, char** argv) {
