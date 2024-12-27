@@ -4,20 +4,22 @@ CFLAGS := -Wall -Wextra -std=c11 -pedantic -ggdb
 SRC_DIR := ./src
 BUILD_DIR := ./build
 
-# Default target
 all: build
 
-# Build target - link the object file to create the executable
-build: $(BUILD_DIR)/main.o
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(BUILD_DIR)/main.o -o $(BUILD_DIR)/main
+build: $(BUILD_DIR)/excel_eng
 
-# Rule to compile main.c into main.o
+$(BUILD_DIR)/excel_eng: $(BUILD_DIR)/main.o
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(BUILD_DIR)/main.o -o $(BUILD_DIR)/excel_eng
+
 $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-# Clean target - remove build directory
+run: $(BUILD_DIR)/excel_eng
+	@echo "Running excel_eng"
+	$(BUILD_DIR)/excel_eng
+
 clean:
 	rm -rf $(BUILD_DIR)
 
