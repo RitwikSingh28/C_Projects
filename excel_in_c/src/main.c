@@ -72,7 +72,25 @@ error:
   return NULL;
 }
 
-void find_table_size(StringView content, size_t *rows, size_t *cols) {
+void find_table_size(StringView content, size_t *max_rows, size_t *max_cols) {
+  size_t rows = 0;
+  size_t cols = 0;
+  for (; content.count > 0; ++rows) {
+    StringView line = sv_split_by_delim(&content, '\n');
+    size_t col = 0;
+    for (; line.count > 0; ++col) {
+      sv_trim(sv_split_by_delim(&line, '|'));
+    }
+
+    cols = col > cols ? col : cols;
+  }
+
+  if (max_rows) {
+    *max_rows = rows;
+  }
+  if (max_cols) {
+    *max_cols = cols;
+  }
 }
 
 int main(int argc, char **argv) {
@@ -96,13 +114,9 @@ int main(int argc, char **argv) {
     .count = input_size,
   };
 
-  for (size_t col = 0; input_view.count > 0; col++) {
-    StringView line = split_by_delim(&input_view, '\n');
-    const char* start = line.data;
-    for (size_t row = 0; line.count > 0; row++) {
-      StringView cell = split_by_delim(&line, '|');
-      printf("%s:%zu:%zu: %.*s\n", input_file_path, col, cell.data - start, (int) cell.count, cell.data);
-    }
-  }
+  size_t max_rows = 0;
+  size_t max_cols = 0;
+  find_table_size(input_view, &max_rows, &max_cols);
+  printf("Input Dimensions: %zu x %zu\n", max_rows, max_cols);
   return 0;
 }
