@@ -10,12 +10,23 @@
 typedef enum {
   EXPR_TYPE_NUMBER = 0,
   EXPR_TYPE_CELL,
-  EXPR_TYPE_BINARY_OP,
+  EXPR_TYPE_PLUS,
 } Expr_Type;
 
 typedef struct {
   Expr_Type type;
 } Expr;
+
+typedef struct {
+  Expr* lhs;
+  Expr* rhs;
+} Expr_Plus;
+
+typedef union {
+  double number;
+  StringView cell;
+  Expr_Plus plus;
+} Expr_Value;
 
 typedef enum {
   CELL_TYPE_TEXT = 0,
@@ -26,7 +37,7 @@ typedef enum {
 typedef union {
   StringView text;
   double number;
-  Expr expr;
+  Expr *expr;   // allocating on the heap
 } Cell_Value;
 
 typedef struct {
@@ -151,6 +162,11 @@ void find_table_size(StringView content, size_t *max_rows, size_t *max_cols) {
   }
 }
 
+Expr* parse_expr(StringView sv) {
+  (void) sv;
+  assert(0 && "NOT IMPLEMENTED YET!");
+  exit(EXIT_FAILURE);
+}
 
 void parse_table(Table *table, StringView content) {
   for (size_t row = 0; content.count > 0; ++row) {
@@ -163,7 +179,7 @@ void parse_table(Table *table, StringView content) {
 
       if (sv_starts_with(val, SV("="))) {
         curr_cell->type = CELL_TYPE_EXPR;
-        value.text = val;
+        value.expr = parse_expr(val);
       } else {
         static char tmp_buffer[1024 * 2];
         snprintf(tmp_buffer, sizeof(tmp_buffer), SV_Fmt, SV_Arg(val));
