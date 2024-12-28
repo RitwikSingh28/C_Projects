@@ -18,7 +18,7 @@ $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
 
 run: $(BUILD_DIR)/excel_eng
 	@echo "Running excel_eng"
-	$(BUILD_DIR)/excel_eng $(input_file) 	# Provide cmdline argument as input_file_path
+	$(BUILD_DIR)/excel_eng $(input) 	# Provide cmdline argument as input_file_path
 
 clean:
 	rm -rf $(BUILD_DIR)

@@ -31,10 +31,20 @@ char *read_file(const char *file_path, size_t *size) {
     goto error;
   }
 
-  (void) file_path;
-  (void) size;
-  assert(0 && "Not Implemented!");
-  return 0;
+  size_t bytes_read = fread(buf, 1, fsize, fp);
+  assert(bytes_read == (size_t)fsize);
+
+  if (ferror(fp)) {
+    goto error;
+  }
+
+  if (size) {
+    *size = bytes_read;
+  }
+
+  fclose(fp);
+
+  return buf;
 
 error:
   if (fp) {
@@ -49,19 +59,22 @@ error:
   return NULL;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "USAGE: ./excel_eng <input.csv>\n");
     fprintf(stderr, "ERROR: Input file not provided\n");
     exit(1);
   }
 
-  const char* input_file_path = argv[1];
+  const char *input_file_path = argv[1];
 
   size_t input_size = 0;
-  char* data = read_file(input_file_path, &input_size);
+  char *data = read_file(input_file_path, &input_size);
   if (!data) {
-    fprintf(stderr, "ERROR: Could not read file %s: %s\n", input_file_path, strerror(errno));
+    fprintf(stderr, "ERROR: Could not read file %s: %s\n", input_file_path,
+            strerror(errno));
   }
+
+  fwrite(data, 1, input_size, stdout);
   return 0;
 }
