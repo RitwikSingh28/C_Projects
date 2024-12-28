@@ -46,6 +46,20 @@ Cell *table_cell_at(Table *table, size_t row, size_t col) {
   return &table->cells[row * table->cols + col];
 }
 
+const char *cell_as_str(Cell* cell) {
+  switch (cell->type) {
+    case CELL_TYPE_TEXT:
+      return "TEXT";
+    case CELL_TYPE_EXPR:
+      return "EXPR";
+    case CELL_TYPE_NUMBER:
+      return "NUMBER";
+    default:
+      assert(0 && "UNREACHABLE CONDITION");
+      exit(EXIT_FAILURE);
+  }
+}
+
 Table table_alloc(size_t rows, size_t cols) {
   Table table = {0};
   table.rows = rows;
@@ -137,6 +151,38 @@ void find_table_size(StringView content, size_t *max_rows, size_t *max_cols) {
   }
 }
 
+
+void parse_table(Table *table, StringView content) {
+  for (size_t row = 0; content.count > 0; ++row) {
+    StringView line = sv_split_by_delim(&content, '\n');
+    for (size_t col = 0; line.count > 0; ++col) {
+
+      StringView val = sv_trim(sv_split_by_delim(&line, '|'));
+      Cell* curr_cell = table_cell_at(table, row, col);
+      Cell_Value value;
+
+      if (sv_starts_with(val, SV("="))) {
+        curr_cell->type = CELL_TYPE_EXPR;
+        value.text = val;
+      } else {
+        static char tmp_buffer[1024 * 2];
+        snprintf(tmp_buffer, sizeof(tmp_buffer), SV_Fmt, SV_Arg(val));
+
+        char *endptr;
+        value.number = strtod(tmp_buffer, &endptr);
+
+        if (endptr != tmp_buffer && *endptr == '\0') {
+          curr_cell->type = CELL_TYPE_NUMBER;
+        } else {
+          curr_cell->type = CELL_TYPE_TEXT;
+          value.text = val; 
+        }
+      }
+      curr_cell->value = value;
+    }
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "USAGE: ./excel_eng <input.csv>\n");
@@ -161,9 +207,16 @@ int main(int argc, char **argv) {
   size_t rows = 0;
   size_t cols = 0;
   find_table_size(input_view, &rows, &cols);
-  printf("Input Dimensions: %zu x %zu\n", rows, cols);
-
   Table table = table_alloc(rows, cols);
+  parse_table(&table, input_view);
+
+  for (size_t row = 0; row < table.rows; ++row) {
+    for (size_t col = 0; col < table.cols; ++col) {
+      const char *type = cell_as_str(table_cell_at(&table, row, col));
+      printf("%s|", type);
+    }
+    printf("\n");
+  }
 
   return 0;
 }

@@ -1,5 +1,7 @@
 #include "split_view.h"
+#include <stdbool.h>
 #include <ctype.h>
+#include <string.h>
 
 StringView sv_gen(const char* data, size_t count) {
   StringView view;
@@ -51,3 +53,18 @@ StringView sv_trim(StringView sv) {
   return sv_trim_right(sv_trim_left(sv));
 }
 
+bool sv_starts_with(StringView sv, StringView prefix) {
+  if (prefix.count <= sv.count) {
+    StringView act_prefix = sv_gen(sv.data, prefix.count);
+    return sv_eq(prefix, act_prefix);
+  }
+
+  return false;
+}
+
+bool sv_eq(StringView sv1, StringView sv2) {
+  if (sv1.count != sv2.count) {
+    return false;
+  }
+  return memcmp(sv1.data, sv2.data, sv1.count) == 0;
+}
