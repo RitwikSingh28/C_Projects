@@ -20,7 +20,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-run: $(BUILD_DIR)/excel_eng
+run: build $(BUILD_DIR)/excel_eng
 	@echo "Running excel_eng"
 	$(BUILD_DIR)/excel_eng $(input) 	# Provide cmdline argument as input_file_path
 

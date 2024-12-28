@@ -1,9 +1,21 @@
-#include "dyn_array.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "split_view.h"
+
+#define INIT_CAP 5
+
+typedef enum {
+  CELL_TYPE_TEXT,
+  CELL_TYPE_NUMBER,
+  CELL_TYPE_EXPR,
+} Cell_Type;
+
+typedef struct {
+  Cell_Type type;
+}Cell;
 
 char *read_file(const char *file_path, size_t *size) {
   FILE *fp = fopen(file_path, "rb");
@@ -60,38 +72,7 @@ error:
   return NULL;
 }
 
-int split_lines(StringArray *dest, const char* buffer) {
-  // Converting the data into a [*char] by splitting off on `\n`
-  char line[1024];
-  size_t index = 0;
-
-  for (const char* start = buffer; *start != '\0'; start++) {
-    if (*start == '\n') {
-      line[index] = '\0';
-      if (add_line(dest, line) < 0) {
-        fprintf(stderr, "ERROR: Failure in adding line to StringArray.\n");
-        return -1;
-      }
-      index = 0;  // Reset index for the next line
-    } else {
-      if (index < sizeof(line) - 1) {
-        line[index++] = *start;
-      } else {
-        fprintf(stderr, "ERROR: Line exceeds buffer size\n");
-        return -1;
-      }
-    }
-  }
-
-  if (index > 0) {
-    line[index] = '\0';
-    if (add_line(dest, line) < 0) {
-      fprintf(stderr, "ERROR: Failure in adding line to StringArray.\n");
-      return -1;
-    }
-  }
-
-  return 0;
+void find_table_size(StringView content, size_t *rows, size_t *cols) {
 }
 
 int main(int argc, char **argv) {
@@ -110,20 +91,18 @@ int main(int argc, char **argv) {
             strerror(errno));
   }
 
-  StringArray *lines = create_array(5);
-  if (!lines) {
-    fprintf(stderr, "ERROR: Could not get StringArray Struct\n");
-    exit(EXIT_FAILURE);
-  }
+  StringView input_view = {
+    .data = data,
+    .count = input_size,
+  };
 
-  if (split_lines(lines, data) != 0) {
-    fprintf(stderr, "ERROR: Failed to split lines\n");
-    exit(EXIT_FAILURE);
+  for (size_t col = 0; input_view.count > 0; col++) {
+    StringView line = split_by_delim(&input_view, '\n');
+    const char* start = line.data;
+    for (size_t row = 0; line.count > 0; row++) {
+      StringView cell = split_by_delim(&line, '|');
+      printf("%s:%zu:%zu: %.*s\n", input_file_path, col, cell.data - start, (int) cell.count, cell.data);
+    }
   }
-
-  for (size_t i = 0; i < lines->size; i++) {
-    fprintf(stdout, "Line %zu: %s\n", i, lines->line[i]);
-  }
-
   return 0;
 }
