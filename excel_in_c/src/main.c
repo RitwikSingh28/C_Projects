@@ -8,14 +8,58 @@
 #define INIT_CAP 5
 
 typedef enum {
-  CELL_TYPE_TEXT,
+  EXPR_TYPE_NUMBER = 0,
+  EXPR_TYPE_CELL,
+  EXPR_TYPE_BINARY_OP,
+} Expr_Type;
+
+typedef struct {
+  Expr_Type type;
+} Expr;
+
+typedef enum {
+  CELL_TYPE_TEXT = 0,
   CELL_TYPE_NUMBER,
   CELL_TYPE_EXPR,
 } Cell_Type;
 
+typedef union {
+  StringView text;
+  double number;
+  Expr expr;
+} Cell_Value;
+
 typedef struct {
   Cell_Type type;
-}Cell;
+  Cell_Value value;
+} Cell;
+
+typedef struct {
+  Cell *cells;
+  size_t rows;
+  size_t cols;
+} Table;
+
+Cell *table_cell_at(Table *table, size_t row, size_t col) {
+  assert(row < table->rows );
+  assert(col < table->cols);
+  return &table->cells[row * table->cols + col];
+}
+
+Table table_alloc(size_t rows, size_t cols) {
+  Table table = {0};
+  table.rows = rows;
+  table.cols = cols;
+
+  table.cells = malloc(sizeof(Cell) * rows * cols);
+  if (!table.cells) {
+    fprintf(stderr, "ERROR: Failed to allocate Table struct.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(table.cells, 0, sizeof(Cell) * rows * cols);
+  return table;
+}
 
 char *read_file(const char *file_path, size_t *size) {
   FILE *fp = fopen(file_path, "rb");
@@ -114,9 +158,12 @@ int main(int argc, char **argv) {
     .count = input_size,
   };
 
-  size_t max_rows = 0;
-  size_t max_cols = 0;
-  find_table_size(input_view, &max_rows, &max_cols);
-  printf("Input Dimensions: %zu x %zu\n", max_rows, max_cols);
+  size_t rows = 0;
+  size_t cols = 0;
+  find_table_size(input_view, &rows, &cols);
+  printf("Input Dimensions: %zu x %zu\n", rows, cols);
+
+  Table table = table_alloc(rows, cols);
+
   return 0;
 }
